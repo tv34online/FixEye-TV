@@ -2,7 +2,7 @@ import os, re, sys, json, time, random, requests
 from urllib.parse import urljoin
 
 PERSON = "40273629"
-MAX_HOURS = 4      # хватает с запасом до следующей пересборки
+MAX_HOURS = 4
 PAGES = 10
 
 S = requests.Session()
@@ -95,6 +95,4 @@ if not schedule:
     sys.exit("нет ни одного видео, деплой отменён")
 
 os.makedirs("public", exist_ok=True)
-json.dump({"start": int(time.time()), "segs": schedule},
-          open("public/schedule.json", "w", encoding="utf-8"), ensure_ascii=False)
-print(f"готово: {len(schedule)} сегментов, {total/3600:.1f} ч")
+json.dump({"start": int(time.time()), "segs":
