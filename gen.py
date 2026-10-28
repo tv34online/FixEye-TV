@@ -1,7 +1,8 @@
-import os, re, sys, json, time, random, requests
+import os, re, sys, random, requests
 from urllib.parse import urljoin
 
 PERSON = "40273629"
+NAME = "FixEye ТВ"
 MAX_HOURS = 4
 PAGES = 10
 
@@ -46,7 +47,7 @@ def pick_variant(url):
     return best[1] if best else url
 
 def parse(url):
-    segs, pre, d, cur_map = [], [], None, None
+    segs, pre, d = [], [], None
     for l in get(url).text.splitlines():
         l = l.strip()
         if not l:
@@ -59,19 +60,17 @@ def parse(url):
                 continue
             l = re.sub(r'URI="([^"]+)"',
                        lambda m: f'URI="{urljoin(url, m.group(1))}"', l)
-            if l.startswith("#EXT-X-MAP"):
-                cur_map = l
             pre.append(l)
             continue
         if d is None:
             continue
-        segs.append({"u": urljoin(url, l), "d": d, "pre": pre, "m": cur_map})
+        segs.append({"u": urljoin(url, l), "d": d, "pre": pre})
         pre, d = [], None
     return segs
 
 vids = list_videos()
 random.shuffle(vids)
-schedule, total = [], 0.0
+body, total, count, target = [], 0.0, 0, 0
 
 for v in vids:
     if total >= MAX_HOURS * 3600:
@@ -88,11 +87,14 @@ for v in vids:
         continue
     if "#EXT-X-DISCONTINUITY" not in segs[0]["pre"]:
         segs[0]["pre"].insert(0, "#EXT-X-DISCONTINUITY")
-    schedule += segs
-    total += sum(s["d"] for s in segs)
+    for s in segs:
+        body += s["pre"] + [f"#EXTINF:{s['d']:.3f},", s["u"]]
+        target = max(target, int(s["d"] + 0.999))
+        total += s["d"]
+    count += 1
 
-if not schedule:
+if not count:
     sys.exit("нет ни одного видео, деплой отменён")
 
-os.makedirs("public", exist_ok=True)
-json.dump({"start": int(time.time()), "segs":
+head = ["#EXTM3U", "#EXT-X-VERSION:7", f"#EXT-X-TARGETDURATION:{target}",
+        "#EXT-X-MEDIA-SEQUENCE:0", "#EXT-X-START:TIME-OFFSET=0,PRE
