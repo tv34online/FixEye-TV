@@ -1,0 +1,8 @@
+{
+  "name": "fixeye-tv",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-01",
+  "vars": {
+    "SCHEDULE_URL": "https://tv34online.github.io/FixEye-TV/schedule.json"
+  }
+}
